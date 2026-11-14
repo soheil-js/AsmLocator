@@ -27,7 +27,7 @@ public sealed class StringMatcher
     /// <param name="value">The value to match. Cannot be <see langword="null"/>.</param>
     /// <param name="comparison">The string comparison rules.</param>
     /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
-    /// <returns>A specification or matcher configured with the supplied constraints.</returns>
+    /// <returns>A new matcher.</returns>
     public static StringMatcher Exact(string value, StringComparison comparison = StringComparison.Ordinal)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -38,7 +38,7 @@ public sealed class StringMatcher
     /// <param name="pattern">The wildcard pattern. Cannot be <see langword="null"/>.</param>
     /// <param name="ignoreCase"><see langword="true"/> to ignore character casing.</param>
     /// <exception cref="ArgumentNullException"><paramref name="pattern"/> is <see langword="null"/>.</exception>
-    /// <returns>A specification or matcher configured with the supplied constraints.</returns>
+    /// <returns>A new matcher.</returns>
     public static StringMatcher Wildcard(string pattern, bool ignoreCase = false)
     {
         ArgumentNullException.ThrowIfNull(pattern);
@@ -58,7 +58,7 @@ public sealed class StringMatcher
     /// <remarks>Matching uses a two-second timeout. Add <c>^</c> and <c>$</c> to require a full-string match.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="pattern"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="pattern"/> is not a valid regular expression.</exception>
-    /// <returns>A specification or matcher configured with the supplied constraints.</returns>
+    /// <returns>A new matcher.</returns>
     public static StringMatcher FromRegex(string pattern, RegexOptions options = RegexOptions.None)
     {
         ArgumentNullException.ThrowIfNull(pattern);
@@ -69,7 +69,7 @@ public sealed class StringMatcher
     /// <summary>Creates a matcher backed by a custom predicate.</summary>
     /// <param name="predicate">The predicate to invoke for each candidate.</param>
     /// <param name="description">A display description used by <see cref="ToString"/>.</param>
-    /// <returns>A specification or matcher configured with the supplied constraints.</returns>
+    /// <returns>A new matcher.</returns>
     public static StringMatcher Where(Func<string, bool> predicate, string description = "<predicate>")
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -79,7 +79,7 @@ public sealed class StringMatcher
 
     /// <summary>Creates an exact matcher or wildcard matcher depending on whether the pattern contains <c>*</c> or <c>?</c>.</summary>
     /// <param name="pattern">The pattern to parse.</param>
-    /// <returns>A specification or matcher configured with the supplied constraints.</returns>
+    /// <returns>A new matcher.</returns>
     public static StringMatcher Parse(string pattern)
     {
         ArgumentNullException.ThrowIfNull(pattern);
@@ -89,15 +89,15 @@ public sealed class StringMatcher
 
     /// <summary>Tests the value; a null input is treated as an empty string.</summary>
     /// <param name="value">The value to compare or match.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool IsMatch(string? value) => _test(value ?? string.Empty);
 
     /// <summary>Converts a string into a <see cref="StringMatcher"/> using <see cref="Parse"/>.</summary>
-    /// <param name="pattern">The wildcard or regular-expression pattern.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <param name="pattern">The exact string or wildcard pattern.</param>
+    /// <returns>The matcher created from the supplied string.</returns>
     public static implicit operator StringMatcher(string pattern) => Parse(pattern);
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => _description;
 }

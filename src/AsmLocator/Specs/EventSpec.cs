@@ -2,7 +2,7 @@ using AsmResolver.DotNet;
 
 namespace AsmLocator;
 
-    /// <summary>Describes constraints used to match an event definition.</summary>
+/// <summary>Describes constraints used to match an event definition.</summary>
 public sealed record EventSpec
 {
     /// <summary>The member name matcher. When null, the name is not used as a constraint.</summary>
@@ -17,24 +17,24 @@ public sealed record EventSpec
 
     /// <summary>Creates a specification constrained by member name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static EventSpec ByName(StringMatcher name) => new() { Name = name };
 
     /// <summary>When only a name is supplied, matches by name; when an event type is supplied, also matches its type.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <param name="eventType">The eventType argument for this operation.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <param name="eventType">An optional matcher for the event type full name.</param>
+    /// <returns>A new specification with the described constraints.</returns>
     public static EventSpec Of(StringMatcher name, StringMatcher? eventType = null) =>
         new() { Name = name, EventType = eventType };
 
-    /// <summary>Converts a string into a EventSpec constrained by event type or name, as appropriate.</summary>
+    /// <summary>Converts a string into a EventSpec that matches the event name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>The specification created from the supplied string.</returns>
     public static implicit operator EventSpec(string name) => ByName(name);
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="ev">The candidate AsmResolver event definition.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(EventDefinition ev)
     {
         if (!Name.Test(ev.Name)) return false;
@@ -45,7 +45,7 @@ public sealed record EventSpec
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Event",
         ("Name", Name), ("Type", EventType), ("Attribute", Attribute));
 }

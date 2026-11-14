@@ -2,7 +2,7 @@ using AsmResolver.DotNet;
 
 namespace AsmLocator;
 
-    /// <summary>Describes constraints used to match a method definition, including its signature and optional body contents.</summary>
+/// <summary>Describes constraints used to match a method definition, including its signature and optional body contents.</summary>
 public sealed record MethodSpec
 {
     /// <summary>The member name matcher. When null, the name is not used as a constraint.</summary>
@@ -49,12 +49,12 @@ public sealed record MethodSpec
 
     /// <summary>Creates a method specification constrained only by name, without constraining its parameters.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec ByName(StringMatcher name) => new() { Name = name };
 
     /// <summary>Creates a method specification constrained only by the supplied name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec Of(StringMatcher name) => ByName(name);
 
     /// <summary>
@@ -62,41 +62,41 @@ public sealed record MethodSpec
     /// </summary>
     /// <param name="name">The name matcher for the target member.</param>
     /// <param name="parameterTypes">The ordered parameter type full names.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec Of(StringMatcher name, params string[] parameterTypes) =>
         new() { Name = name, Parameters = parameterTypes.Select(t => ParameterSpec.OfType(t)).ToArray() };
 
     /// <summary>Creates a method specification that requires no parameters.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec NoParameters(StringMatcher name) =>
         new() { Name = name, Parameters = Array.Empty<ParameterSpec>() };
 
     /// <summary>Creates a method specification using detailed, ordered parameter specifications.</summary>
     /// <param name="name">The name matcher for the target member.</param>
     /// <param name="parameters">The ordered parameter specifications.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec WithParameters(StringMatcher name, params ParameterSpec[] parameters) =>
         new() { Name = name, Parameters = parameters };
 
     /// <summary>Creates a specification for an instance constructor with the supplied parameter types.</summary>
     /// <param name="parameterTypes">The ordered parameter type full names.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec Constructor(params string[] parameterTypes) =>
         Of(".ctor", parameterTypes);
 
     /// <summary>Creates a specification for a parameterless static constructor.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static MethodSpec StaticConstructor() => NoParameters(".cctor");
 
     /// <summary>Converts a method name string into a <see cref="MethodSpec"/>.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>The specification created from the supplied string.</returns>
     public static implicit operator MethodSpec(string name) => ByName(name);
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="method">The candidate AsmResolver method definition.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(MethodDefinition method)
     {
         if (!Name.Test(method.Name)) return false;
@@ -122,26 +122,30 @@ public sealed record MethodSpec
 
         if (Attribute is not null && !method.HasAttribute(Attribute)) return false;
 
-        // Body inspection is deferred until the inexpensive metadata constraints have passed.
-        var body = method.CilMethodBody;
-        if (HasBody.Fails(body is not null)) return false;
-
-        if (Locals is not null || BodyContains is not null)
+        // Body inspection is deferred until the inexpensive metadata constraints have passed,
+        // and the body is only read when a constraint actually needs it.
+        if (HasBody is not null || Locals is not null || BodyContains is not null)
         {
-            if (body is null) return false;
+            var body = method.CilMethodBody;
+            if (HasBody.Fails(body is not null)) return false;
 
-            if (Locals is not null && !Locals.All(l => body.LocalVariables.Any(l.Matches)))
-                return false;
+            if (Locals is not null || BodyContains is not null)
+            {
+                if (body is null) return false;
 
-            if (BodyContains is not null && !BodyContains.All(s => body.Instructions.Any(s.Matches)))
-                return false;
+                if (Locals is not null && !Locals.All(l => body.LocalVariables.Any(l.Matches)))
+                    return false;
+
+                if (BodyContains is not null && !BodyContains.All(s => body.Instructions.Any(s.Matches)))
+                    return false;
+            }
         }
 
         return Where?.Invoke(method) ?? true;
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Method",
         ("Name", Name),
         ("Params", Parameters is null ? null : "[" + string.Join(", ", Parameters.Select(p => p.ParameterType?.ToString() ?? "*")) + "]"),

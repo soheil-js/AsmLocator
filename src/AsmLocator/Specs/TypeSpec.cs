@@ -2,7 +2,7 @@ using AsmResolver.DotNet;
 
 namespace AsmLocator;
 
-    /// <summary>Describes constraints used to match a type definition.</summary>
+/// <summary>Describes constraints used to match a type definition.</summary>
 public sealed record TypeSpec
 {
     /// <summary>The namespace matcher. When null, the namespace is not used as a constraint.</summary>
@@ -44,37 +44,37 @@ public sealed record TypeSpec
     public Func<TypeDefinition, bool>? Where { get; init; }
 
     /// <summary>Creates a type specification constrained by namespace and type name.</summary>
-    /// <param name="namespace">The namespace argument for this operation.</param>
+    /// <param name="namespace">The namespace matcher.</param>
     /// <param name="name">The type name matcher.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static TypeSpec Of(StringMatcher @namespace, StringMatcher name) =>
         new() { Namespace = @namespace, Name = name };
 
     /// <summary>Creates a specification constrained by member name.</summary>
     /// <param name="name">The type name matcher.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static TypeSpec ByName(StringMatcher name) => new() { Name = name };
 
     /// <summary>Creates a type specification constrained by full name.</summary>
     /// <param name="fullName">The type full-name matcher.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static TypeSpec ByFullName(StringMatcher fullName) => new() { FullName = fullName };
 
     /// <summary>Creates a specification for a nested type with the supplied declaring type and nested type name.</summary>
     /// <param name="outer">The specification of the declaring type.</param>
     /// <param name="name">The type name matcher.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static TypeSpec NestedIn(TypeSpec outer, StringMatcher name) =>
         new() { DeclaringType = outer, Name = name };
 
     /// <summary>Converts a full type name string into a <see cref="TypeSpec"/>.</summary>
     /// <param name="fullName">The type full-name matcher.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>The specification created from the supplied string.</returns>
     public static implicit operator TypeSpec(string fullName) => ByFullName(fullName);
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="type">The candidate AsmResolver type definition.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(TypeDefinition type)
     {
         if (!FullName.Test(type.FullName)) return false;
@@ -105,7 +105,7 @@ public sealed record TypeSpec
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Type",
         ("FullName", FullName), ("Namespace", Namespace), ("Name", Name),
         ("BaseType", BaseType), ("Attribute", Attribute));

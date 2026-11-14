@@ -2,7 +2,7 @@ using AsmResolver.DotNet;
 
 namespace AsmLocator;
 
-    /// <summary>Describes constraints used to match a field definition.</summary>
+/// <summary>Describes constraints used to match a field definition.</summary>
 public sealed record FieldSpec
 {
     /// <summary>The member name matcher. When null, the name is not used as a constraint.</summary>
@@ -27,24 +27,24 @@ public sealed record FieldSpec
 
     /// <summary>Creates a specification constrained by member name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static FieldSpec ByName(StringMatcher name) => new() { Name = name };
 
     /// <summary>When only a name is supplied, matches by name; when a type is supplied, also matches the field type.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <param name="fieldType">The fieldType argument for this operation.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <param name="fieldType">An optional matcher for the field type full name.</param>
+    /// <returns>A new specification with the described constraints.</returns>
     public static FieldSpec Of(StringMatcher name, StringMatcher? fieldType = null) =>
         new() { Name = name, FieldType = fieldType };
 
-    /// <summary>Converts a string into a FieldSpec constrained by field type or name, as appropriate.</summary>
+    /// <summary>Converts a string into a FieldSpec that matches the field name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>The specification created from the supplied string.</returns>
     public static implicit operator FieldSpec(string name) => ByName(name);
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="field">The candidate AsmResolver field definition.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(FieldDefinition field)
     {
         if (!Name.Test(field.Name)) return false;
@@ -62,7 +62,7 @@ public sealed record FieldSpec
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Field",
         ("Name", Name), ("Type", FieldType), ("Attribute", Attribute));
 }

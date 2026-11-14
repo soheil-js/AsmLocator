@@ -2,7 +2,7 @@ using AsmResolver.DotNet;
 
 namespace AsmLocator;
 
-    /// <summary>Describes constraints used to match a property definition.</summary>
+/// <summary>Describes constraints used to match a property definition.</summary>
 public sealed record PropertySpec
 {
     /// <summary>The member name matcher. When null, the name is not used as a constraint.</summary>
@@ -24,24 +24,24 @@ public sealed record PropertySpec
 
     /// <summary>Creates a specification constrained by member name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static PropertySpec ByName(StringMatcher name) => new() { Name = name };
 
     /// <summary>When only a name is supplied, matches by name; when a property type is supplied, also matches its type.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <param name="propertyType">The propertyType argument for this operation.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <param name="propertyType">An optional matcher for the property type full name.</param>
+    /// <returns>A new specification with the described constraints.</returns>
     public static PropertySpec Of(StringMatcher name, StringMatcher? propertyType = null) =>
         new() { Name = name, PropertyType = propertyType };
 
-    /// <summary>Converts a string into a PropertySpec constrained by property type or name, as appropriate.</summary>
+    /// <summary>Converts a string into a PropertySpec that matches the property name.</summary>
     /// <param name="name">The name matcher for the target member.</param>
-    /// <returns>The result of the lookup, matching, conversion, or formatting operation.</returns>
+    /// <returns>The specification created from the supplied string.</returns>
     public static implicit operator PropertySpec(string name) => ByName(name);
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="property">The candidate AsmResolver property definition.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(PropertyDefinition property)
     {
         if (!Name.Test(property.Name)) return false;
@@ -62,7 +62,7 @@ public sealed record PropertySpec
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Property",
         ("Name", Name), ("Type", PropertyType), ("Attribute", Attribute));
 }

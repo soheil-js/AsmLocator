@@ -12,6 +12,12 @@ namespace AsmLocator;
 /// <item><description><c>GetX</c> requires exactly one match and throws <see cref="MemberNotFoundException"/> otherwise.</description></item>
 /// <item><description><c>EditX</c> resolves one match and invokes an edit callback.</description></item>
 /// </list>
+/// <para>
+/// <c>FindXs</c> searches every type that matches the <see cref="TypeSpec"/>, whereas <c>GetX</c>, <c>EditX</c>
+/// and the CIL helpers first require the <see cref="TypeSpec"/> to resolve to exactly one type. A broad
+/// <see cref="TypeSpec"/> therefore works with <c>FindX</c> but makes <c>GetX</c> throw an ambiguity error
+/// even when only one of the matched types contains the requested member.
+/// </para>
 /// </summary>
 public sealed class AssemblyLocator
 {
@@ -45,18 +51,18 @@ public sealed class AssemblyLocator
 
     /// <summary>Returns the first type matching the supplied specification, or null when no type matches.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public TypeDefinition? FindType(TypeSpec type) => FindTypes(type).FirstOrDefault();
 
     /// <summary>Enumerates all types matching the supplied specification.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<TypeDefinition> FindTypes(TypeSpec type) => AllTypes.Where(type.Matches);
 
     /// <summary>Returns the unique type matching the supplied specification.</summary>
     /// <exception cref="MemberNotFoundException">No type matches, or more than one type matches.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public TypeDefinition GetType(TypeSpec type) => One(FindTypes(type), $"{type}");
 
     /// <summary>Finds exactly one type and invokes the supplied callback to edit it.</summary>
@@ -73,14 +79,14 @@ public sealed class AssemblyLocator
     /// <summary>Enumerates matching fields from every type that matches the supplied type specification.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="field">The field specification used to select candidate fields.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<FieldDefinition> FindFields(TypeSpec type, FieldSpec field) =>
         FindTypes(type).SelectMany(t => t.FindFields(field));
 
     /// <summary>Returns the first matching field, or null when no field matches.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="field">The field specification used to select candidate fields.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public FieldDefinition? FindField(TypeSpec type, FieldSpec field) =>
         FindFields(type, field).FirstOrDefault();
 
@@ -88,7 +94,7 @@ public sealed class AssemblyLocator
     /// <exception cref="MemberNotFoundException">The type or field is missing, or the field match is ambiguous.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="field">The field specification used to select candidate fields.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public FieldDefinition GetField(TypeSpec type, FieldSpec field) =>
         One(GetType(type).FindFields(field), $"{field} in {type}");
 
@@ -107,14 +113,14 @@ public sealed class AssemblyLocator
     /// <summary>Enumerates matching properties from every type that matches the supplied type specification.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="property">The property specification used to select candidate properties.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<PropertyDefinition> FindProperties(TypeSpec type, PropertySpec property) =>
         FindTypes(type).SelectMany(t => t.FindProperties(property));
 
     /// <summary>Returns the first matching property, or null when no property matches.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="property">The property specification used to select candidate properties.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public PropertyDefinition? FindProperty(TypeSpec type, PropertySpec property) =>
         FindProperties(type, property).FirstOrDefault();
 
@@ -122,7 +128,7 @@ public sealed class AssemblyLocator
     /// <exception cref="MemberNotFoundException">The type or property is missing, or the property match is ambiguous.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="property">The property specification used to select candidate properties.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public PropertyDefinition GetProperty(TypeSpec type, PropertySpec property) =>
         One(GetType(type).FindProperties(property), $"{property} in {type}");
 
@@ -141,14 +147,14 @@ public sealed class AssemblyLocator
     /// <summary>Enumerates matching events from every type that matches the supplied type specification.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="ev">The event specification used to select candidate events.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<EventDefinition> FindEvents(TypeSpec type, EventSpec ev) =>
         FindTypes(type).SelectMany(t => t.FindEvents(ev));
 
     /// <summary>Returns the first matching event, or null when no event matches.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="ev">The event specification used to select candidate events.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public EventDefinition? FindEvent(TypeSpec type, EventSpec ev) =>
         FindEvents(type, ev).FirstOrDefault();
 
@@ -156,7 +162,7 @@ public sealed class AssemblyLocator
     /// <exception cref="MemberNotFoundException">The type or event is missing, or the event match is ambiguous.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="ev">The event specification used to select candidate events.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public EventDefinition GetEvent(TypeSpec type, EventSpec ev) =>
         One(GetType(type).FindEvents(ev), $"{ev} in {type}");
 
@@ -175,14 +181,14 @@ public sealed class AssemblyLocator
     /// <summary>Enumerates matching methods from every type that matches the supplied type specification.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<MethodDefinition> FindMethods(TypeSpec type, MethodSpec method) =>
         FindTypes(type).SelectMany(t => t.FindMethods(method));
 
     /// <summary>Returns the first matching method, or null when no method matches.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public MethodDefinition? FindMethod(TypeSpec type, MethodSpec method) =>
         FindMethods(type, method).FirstOrDefault();
 
@@ -190,7 +196,7 @@ public sealed class AssemblyLocator
     /// <exception cref="MemberNotFoundException">The type or method is missing, or the method match is ambiguous.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public MethodDefinition GetMethod(TypeSpec type, MethodSpec method) =>
         One(GetType(type).FindMethods(method), $"{method} in {type}");
 
@@ -209,7 +215,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="property">The property specification used to select candidate properties.</param>
     /// <param name="accessor">The property or event accessor to retrieve.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public MethodDefinition GetMethod(TypeSpec type, PropertySpec property, PropertyAccessor accessor) =>
         GetProperty(type, property).GetAccessor(accessor)
         ?? throw new MemberNotFoundException($"{property} in {type} has no {accessor} accessor.");
@@ -219,7 +225,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="ev">The event specification used to select candidate events.</param>
     /// <param name="accessor">The property or event accessor to retrieve.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public MethodDefinition GetMethod(TypeSpec type, EventSpec ev, EventAccessor accessor) =>
         GetEvent(type, ev).GetAccessor(accessor)
         ?? throw new MemberNotFoundException($"{ev} in {type} has no {accessor} accessor.");
@@ -230,7 +236,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="parameter">The parameter specification used to select candidate parameters.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<Parameter> FindParameters(TypeSpec type, MethodSpec method, ParameterSpec parameter) =>
         FindMethods(type, method).SelectMany(m => m.FindParameters(parameter));
 
@@ -238,7 +244,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="parameter">The parameter specification used to select candidate parameters.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public Parameter? FindParameter(TypeSpec type, MethodSpec method, ParameterSpec parameter) =>
         FindParameters(type, method, parameter).FirstOrDefault();
 
@@ -247,7 +253,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="parameter">The parameter specification used to select candidate parameters.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public Parameter GetParameter(TypeSpec type, MethodSpec method, ParameterSpec parameter) =>
         One(GetMethod(type, method).FindParameters(parameter), $"{parameter} in {method} of {type}");
 
@@ -256,7 +262,7 @@ public sealed class AssemblyLocator
     /// <summary>Returns the body of the first matching method, or null when the method or its body is absent.</summary>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The first match, or <see langword="null"/> when nothing matches.</returns>
     public CilMethodBody? FindBody(TypeSpec type, MethodSpec method) =>
         FindMethod(type, method)?.CilMethodBody;
 
@@ -264,7 +270,7 @@ public sealed class AssemblyLocator
     /// <exception cref="MemberNotFoundException">The method, accessor, or CIL body is missing, or the method match is ambiguous.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public CilMethodBody GetBody(TypeSpec type, MethodSpec method) =>
         BodyOf(GetMethod(type, method), $"{method} in {type}");
 
@@ -273,7 +279,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="property">The property specification used to select candidate properties.</param>
     /// <param name="accessor">The property or event accessor to retrieve.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public CilMethodBody GetBody(TypeSpec type, PropertySpec property, PropertyAccessor accessor) =>
         BodyOf(GetMethod(type, property, accessor), $"{accessor} of {property} in {type}");
 
@@ -282,7 +288,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="ev">The event specification used to select candidate events.</param>
     /// <param name="accessor">The property or event accessor to retrieve.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public CilMethodBody GetBody(TypeSpec type, EventSpec ev, EventAccessor accessor) =>
         BodyOf(GetMethod(type, ev, accessor), $"{accessor} of {ev} in {type}");
 
@@ -315,7 +321,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="local">The local-variable specification used to select candidate locals.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A lazily evaluated sequence of the matching items; empty when nothing matches.</returns>
     public IEnumerable<CilLocalVariable> FindLocals(TypeSpec type, MethodSpec method, LocalSpec local) =>
         FindMethods(type, method)
             .Select(m => m.CilMethodBody)
@@ -327,7 +333,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="local">The local-variable specification used to select candidate locals.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public CilLocalVariable GetLocal(TypeSpec type, MethodSpec method, LocalSpec local) =>
         One(GetBody(type, method).FindLocals(local), $"{local} in {method} of {type}");
 
@@ -338,7 +344,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="instruction">The instruction specification used to select candidate instructions.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>All matches in order of occurrence; empty when nothing matches.</returns>
     public IReadOnlyList<InstructionMatch> FindInstructions(TypeSpec type, MethodSpec method, InstructionSpec instruction) =>
         GetBody(type, method).FindInstructions(instruction).ToList();
 
@@ -347,7 +353,7 @@ public sealed class AssemblyLocator
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
     /// <param name="instruction">The instruction specification used to select candidate instructions.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <returns>The single matching item.</returns>
     public InstructionMatch GetInstruction(TypeSpec type, MethodSpec method, InstructionSpec instruction) =>
         One(GetBody(type, method).FindInstructions(instruction), $"{instruction} in {method} of {type}");
 
@@ -355,8 +361,8 @@ public sealed class AssemblyLocator
     /// <exception cref="ArgumentException">The pattern is empty or contains a null specification.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <param name="pattern">The wildcard or regular-expression pattern.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <param name="pattern">The ordered instruction specifications that form the pattern.</param>
+    /// <returns>All matches in order of occurrence; empty when nothing matches.</returns>
     public IReadOnlyList<InstructionSequence> FindPattern(TypeSpec type, MethodSpec method, params InstructionSpec[] pattern) =>
         GetBody(type, method).FindPattern(pattern).ToList();
 
@@ -365,8 +371,8 @@ public sealed class AssemblyLocator
     /// <exception cref="ArgumentException">The pattern is empty.</exception>
     /// <param name="type">The type specification used to select candidate types.</param>
     /// <param name="method">The method specification used to select candidate methods.</param>
-    /// <param name="pattern">The wildcard or regular-expression pattern.</param>
-    /// <returns>The matching member or sequence, according to the method name and lookup semantics.</returns>
+    /// <param name="pattern">The ordered instruction specifications that form the pattern.</param>
+    /// <returns>The single matching item.</returns>
     public InstructionSequence GetPattern(TypeSpec type, MethodSpec method, params InstructionSpec[] pattern) =>
         One(GetBody(type, method).FindPattern(pattern), $"instruction pattern in {method} of {type}");
 
@@ -403,7 +409,11 @@ public sealed class AssemblyLocator
     // ================= Save =================
 
     /// <summary>Writes the underlying module to the specified output path.</summary>
-    /// <param name="path">The input or output file path.</param>
+    /// <remarks>
+    /// Write to a different path than the one the module was loaded from: the input file may still be
+    /// in use by the loaded module, which can make overwriting it fail.
+    /// </remarks>
+    /// <param name="path">The output file path.</param>
     public void Save(string path) => Module.Write(path);
 
     // ================= helpers =================

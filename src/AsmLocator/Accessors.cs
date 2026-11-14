@@ -25,11 +25,9 @@ public enum EventAccessor
 /// <summary>Represents a matched instruction and its index in the method instruction collection at search time.</summary>
 /// <param name="Index">The zero-based instruction index at the time of the search.</param>
 /// <param name="Instruction">The matched CIL instruction.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
 public readonly record struct InstructionMatch(int Index, CilInstruction Instruction);
 
 /// <summary>Represents a contiguous sequence of CIL instructions matching an instruction pattern.</summary>
 /// <param name="StartIndex">The zero-based index of the first matched instruction at search time.</param>
 /// <param name="Instructions">The instructions in the matched sequence.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
 public sealed record InstructionSequence(int StartIndex, IReadOnlyList<CilInstruction> Instructions);

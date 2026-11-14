@@ -1,6 +1,8 @@
 namespace AsmLocator;
 
-/// <summary>Represents a lookup failure, including missing or ambiguous results and unavailable method bodies or accessors.</summary>
+/// <summary>
+/// Thrown when a <c>Get*</c> or <c>Edit*</c> lookup finds no match, finds more than one match,
+/// or reaches a member that has no CIL body or no requested accessor.
+/// </summary>
 /// <param name="message">A message describing the lookup failure.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
 public sealed class MemberNotFoundException(string message) : Exception(message);

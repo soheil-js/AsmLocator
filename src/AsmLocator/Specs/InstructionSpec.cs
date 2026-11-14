@@ -33,14 +33,14 @@ public sealed record InstructionSpec
     /// <summary>Creates an instruction specification for an exact opcode and optional operand matcher.</summary>
     /// <param name="opCode">The CIL opcode to match.</param>
     /// <param name="operand">An optional matcher for the instruction operand.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static InstructionSpec Op(CilOpCode opCode, StringMatcher? operand = null) =>
         new() { Code = opCode.Code, Operand = operand };
 
     /// <summary>Creates an instruction specification for a mnemonic and optional operand matcher.</summary>
     /// <param name="mnemonic">The instruction mnemonic matcher.</param>
     /// <param name="operand">An optional matcher for the instruction operand.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A new specification with the described constraints.</returns>
     public static InstructionSpec WithMnemonic(StringMatcher mnemonic, StringMatcher? operand = null) =>
         new() { Mnemonic = mnemonic, Operand = operand };
 
@@ -53,7 +53,7 @@ public sealed record InstructionSpec
         return new()
         {
             Operand = method,
-            Where = instruction => instruction.OpCode.Mnemonic is "call" or "callvirt"
+            Where = instruction => instruction.OpCode.Code is CilCode.Call or CilCode.Callvirt
         };
     }
 
@@ -76,12 +76,11 @@ public sealed record InstructionSpec
     }
 
     /// <summary>A specification that matches any single instruction, useful as a pattern wildcard.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
     public static InstructionSpec AnyInstruction { get; } = new();
 
     /// <summary>Returns whether the supplied candidate satisfies all constraints configured in this specification.</summary>
     /// <param name="instruction">The candidate CIL instruction.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns><see langword="true"/> if every configured constraint is satisfied; otherwise <see langword="false"/>.</returns>
     public bool Matches(CilInstruction instruction)
     {
         if (Code is { } code && instruction.OpCode.Code != code) return false;
@@ -98,7 +97,7 @@ public sealed record InstructionSpec
     /// parameters use their names; labels use <c>IL_XXXX</c>; switch labels are comma-separated; other values use invariant conversion.
     /// </summary>
     /// <param name="instruction">The candidate CIL instruction.</param>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>The textual operand representation, or <see langword="null"/> when the instruction has no operand.</returns>
     public static string? DescribeOperand(CilInstruction instruction)
     {
         var operand = instruction.Operand;
@@ -117,7 +116,7 @@ public sealed record InstructionSpec
     }
 
     /// <summary>Returns a readable representation of this object.</summary>
-    /// <returns>The result of the requested lookup or matching operation.</returns>
+    /// <returns>A readable description.</returns>
     public override string ToString() => MatchHelpers.Format("Instruction",
         ("Code", Code), ("Mnemonic", Mnemonic), ("Operand", Operand), ("Offset", Offset));
 }
