@@ -25,7 +25,13 @@ try
     var matchers = new TypeSpec { FullName = "AsmLocator.StringMatcher" };
     var factories = locator.FindMethods(
         matchers,
-        MethodSpec.ByName("*") with { IsPublic = true, IsStatic = true, HasBody = true });
+        MethodSpec.ByName("*") with
+        {
+            IsPublic = true,
+            IsStatic = true,
+            HasBody = true,
+            Where = m => !m.IsSpecialName
+        });
 
     Console.WriteLine();
     Console.WriteLine("Public static methods of StringMatcher:");
