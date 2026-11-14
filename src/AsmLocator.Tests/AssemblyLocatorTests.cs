@@ -39,6 +39,27 @@ public sealed class CilFixture
     public static object CreateObject() => new object();
 
     public static int GetLength(string value) => value.Length;
+
+    public static string GetGreeting() => "old";
+
+    public static void WriteTwice()
+    {
+        Console.WriteLine("a");
+        Console.WriteLine("b");
+    }
+
+    public static int Overloaded(int value) => value;
+
+    public static string Overloaded(string value) => value;
+
+    public static int Counter { get; set; }
+
+    public sealed class Nested
+    {
+        public sealed class Deep
+        {
+        }
+    }
 }
 
 public sealed class CilLookupTests
