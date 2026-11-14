@@ -138,14 +138,10 @@ dotnet docfx docs/docfx.json
 
 The generated site is written to `docs/_site`.
 
-## Development
+## Credits
 
-```bash
-dotnet restore
-dotnet build
-dotnet test
-```
+- [AsmResolver](https://github.com/Washi1337/AsmResolver) — A library for creating, reading and editing PE files and .NET modules.
 
 ## License
 
-No license has been selected for this source distribution yet. Add a `LICENSE` file and set the package license metadata before publishing the package publicly.
+See the [LICENSE](LICENSE) file for the applicable license terms.
