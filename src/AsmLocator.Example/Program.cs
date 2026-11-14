@@ -30,7 +30,7 @@ try
             IsPublic = true,
             IsStatic = true,
             HasBody = true,
-            Where = m => !m.IsSpecialName
+            IsSpecialName = false
         });
 
     Console.WriteLine();
