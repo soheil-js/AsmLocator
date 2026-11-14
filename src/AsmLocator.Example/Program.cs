@@ -1,68 +1,53 @@
-﻿using AsmLocator;
+using AsmLocator;
 
-const string defaultPath = @"C:\Program Files\Easeware\DriverEasy";
-const string dllName = "Easeware.Driver.Core.dll";
-const string appName = "DriverEasy.exe";
-string appPath = Path.Combine(defaultPath, appName);
-string dllPath = Path.Combine(defaultPath, dllName);
+// Usage: AsmLocator.Example [path-to-assembly]
+// Without an argument the example inspects AsmLocator's own assembly.
+string path = args.Length > 0
+    ? args[0].Trim('"')
+    : typeof(AssemblyLocator).Assembly.Location;
 
-if (!File.Exists(dllPath))
+if (!File.Exists(path))
 {
-    Console.WriteLine("DriverEasy installation was not found.");
-    Console.WriteLine();
-
-    while (true)
-    {
-        Console.Write("Enter DriverEasy directory path: ");
-
-        string? directory = Console.ReadLine()?.Trim().Trim('"');
-
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            Console.WriteLine("Path cannot be empty.");
-            continue;
-        }
-
-        dllPath = Path.Combine(directory, dllName);
-
-        if (File.Exists(dllPath))
-            break;
-
-        Console.WriteLine($"DLL not found: {dllPath}");
-        Console.WriteLine("Please try again.");
-        Console.WriteLine();
-    }
+    Console.Error.WriteLine($"Assembly not found: {path}");
+    return 1;
 }
-
 
 try
 {
-    var locator = AssemblyLocator.FromFile(dllPath);
+    var locator = AssemblyLocator.FromFile(path);
 
-    TypeSpec type = TypeSpec.ByFullName("Easeware.Driver.Core.Service.Impl.ProductService");
+    // 1. Find types with a wildcard name matcher.
+    Console.WriteLine("Types ending in 'Spec':");
+    foreach (var type in locator.FindTypes(TypeSpec.ByName("*Spec")))
+        Console.WriteLine($"  {type.FullName}");
 
-    //var spec = MethodSpec.ByName("b") with
-    //{
-    //    ParameterCount = 3,
-    //    HasBody = true
-    //};
+    // 2. Find methods by metadata constraints.
+    var matchers = new TypeSpec { FullName = "AsmLocator.StringMatcher" };
+    var factories = locator.FindMethods(
+        matchers,
+        MethodSpec.ByName("*") with { IsPublic = true, IsStatic = true, HasBody = true });
 
-    var spec = MethodSpec.Of("b", "System.String", "System.String", "System.Boolean");
+    Console.WriteLine();
+    Console.WriteLine("Public static methods of StringMatcher:");
+    foreach (var method in factories)
+        Console.WriteLine($"  {method.Name}");
 
-    var method = locator.GetMethod(type, spec);
+    // 3. Search CIL: where is the Regex constructor called?
+    var regexCalls = locator.FindInstructions(
+        matchers,
+        MethodSpec.ByName("Wildcard"),
+        InstructionSpec.NewObj("*System.Text.RegularExpressions.Regex::.ctor*"));
 
-    var body = method.CilMethodBody;
+    Console.WriteLine();
+    Console.WriteLine($"Regex constructions inside StringMatcher.Wildcard: {regexCalls.Count}");
+    foreach (var call in regexCalls)
+        Console.WriteLine($"  [{call.Index}] {call.Instruction}");
 
-    Console.WriteLine($"Instruction count: {body?.Instructions.Count ?? 0}");
-    Console.WriteLine($"Method: {method.FullName}");
+    return 0;
 }
 catch (Exception ex)
 {
-    Console.WriteLine();
-    Console.WriteLine("Failed to load assembly.");
-    Console.WriteLine(ex);
+    Console.Error.WriteLine("Failed to analyse the assembly.");
+    Console.Error.WriteLine(ex);
+    return 1;
 }
-
-Console.WriteLine();
-Console.WriteLine("Press any key to exit...");
-Console.ReadKey();
