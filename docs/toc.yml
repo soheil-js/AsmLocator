@@ -1,0 +1,14 @@
+- name: Home
+  href: index.md
+- name: Articles
+  items:
+    - name: Getting started
+      href: articles/getting-started.md
+    - name: Specifications and matching
+      href: articles/specifications.md
+    - name: Searching CIL instructions
+      href: articles/cil-search.md
+    - name: Editing assemblies
+      href: articles/editing.md
+- name: API Reference
+  href: api/toc.yml

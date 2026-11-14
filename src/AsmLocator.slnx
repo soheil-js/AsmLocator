@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AsmLocator.Example/AsmLocator.Example.csproj" />
+  <Project Path="AsmLocator.Tests/AsmLocator.Tests.csproj" Id="c626a1a2-5e93-4592-8968-d9359fde1938" />
+  <Project Path="AsmLocator/AsmLocator.csproj" />
+</Solution>
