@@ -1,7 +1,4 @@
-﻿
-
-using AsmLocator;
-using AsmResolver.DotNet;
+﻿using AsmLocator;
 
 const string defaultPath = @"C:\Program Files\Easeware\DriverEasy";
 const string dllName = "Easeware.Driver.Core.dll";
@@ -40,19 +37,32 @@ if (!File.Exists(dllPath))
 
 try
 {
-    var locator = AssemblyLocator.FromFile("MyApplication.dll");
+    var locator = AssemblyLocator.FromFile(dllPath);
 
-    TypeSpec typeSpec = "MyApplication.Services.UserService";
-    var method = locator.GetMethod(typeSpec, MethodSpec.ByName("GetUser"));
+    TypeSpec type = TypeSpec.ByFullName("Easeware.Driver.Core.Service.Impl.ProductService");
+
+    //var spec = MethodSpec.ByName("b") with
+    //{
+    //    ParameterCount = 3,
+    //    HasBody = true
+    //};
+
+    var spec = MethodSpec.Of("b", "System.String", "System.String", "System.Boolean");
+
+    var method = locator.GetMethod(type, spec);
 
     var body = method.CilMethodBody;
 
-    Console.WriteLine($"Method: {method.FullName}");
     Console.WriteLine($"Instruction count: {body?.Instructions.Count ?? 0}");
-
-    locator.Save("MyApplication.patched.dll");
+    Console.WriteLine($"Method: {method.FullName}");
 }
-catch
+catch (Exception ex)
 {
-
+    Console.WriteLine();
+    Console.WriteLine("Failed to load assembly.");
+    Console.WriteLine(ex);
 }
+
+Console.WriteLine();
+Console.WriteLine("Press any key to exit...");
+Console.ReadKey();
