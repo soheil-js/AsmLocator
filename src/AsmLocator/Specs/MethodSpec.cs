@@ -34,6 +34,12 @@ public sealed record MethodSpec
     public bool? IsVirtual { get; init; }
     /// <summary>Whether the method must be a constructor.</summary>
     public bool? IsConstructor { get; init; }
+    /// <summary>
+    /// Whether the method must be marked <c>specialname</c>. Property and event accessors
+    /// (<c>get_X</c>, <c>set_X</c>, <c>add_X</c>, <c>remove_X</c>), operator overloads (<c>op_Implicit</c>)
+    /// and constructors carry this flag. Use <see langword="false"/> to exclude them.
+    /// </summary>
+    public bool? IsSpecialName { get; init; }
 
     /// <summary>Whether the method must contain a CIL method body.</summary>
     public bool? HasBody { get; init; }
@@ -107,6 +113,7 @@ public sealed record MethodSpec
         if (IsAbstract.Fails(method.IsAbstract)) return false;
         if (IsVirtual.Fails(method.IsVirtual)) return false;
         if (IsConstructor.Fails(method.IsConstructor)) return false;
+        if (IsSpecialName.Fails(method.IsSpecialName)) return false;
         if (GenericParameterCount.Fails(method.GenericParameters.Count)) return false;
         if (ParameterCount.Fails(method.Parameters.Count)) return false;
 

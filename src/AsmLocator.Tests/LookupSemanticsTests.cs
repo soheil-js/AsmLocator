@@ -129,4 +129,36 @@ public sealed class LookupSemanticsTests
 
         Assert.Empty(matches);
     }
+
+    [Fact]
+    public void IsSpecialName_True_MatchesPropertyAccessors()
+    {
+        var locator = Load();
+
+        var names = locator.FindMethods(
+                Fixture,
+                MethodSpec.ByName("*Counter") with { IsSpecialName = true })
+            .Select(m => m.Name?.ToString())
+            .ToList();
+
+        Assert.Contains("get_Counter", names);
+        Assert.Contains("set_Counter", names);
+    }
+
+    [Fact]
+    public void IsSpecialName_False_ExcludesAccessors_AndKeepsRegularMethods()
+    {
+        var locator = Load();
+
+        var accessors = locator.FindMethods(
+            Fixture,
+            MethodSpec.ByName("*Counter") with { IsSpecialName = false });
+
+        var regular = locator.FindMethods(
+            Fixture,
+            MethodSpec.ByName("Overloaded") with { IsSpecialName = false });
+
+        Assert.Empty(accessors);
+        Assert.Equal(2, regular.Count());
+    }
 }
