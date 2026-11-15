@@ -1,14 +1,44 @@
 - name: Home
   href: index.md
-- name: Articles
+- name: Beginner
   items:
+    - name: What is AsmLocator?
+      href: articles/introduction.md
+    - name: Concepts
+      href: articles/concepts.md
     - name: Getting started
       href: articles/getting-started.md
-    - name: Specifications and matching
+    - name: "Tutorial: your first patch"
+      href: articles/tutorial.md
+- name: Guide
+  items:
+    - name: Specifications
       href: articles/specifications.md
+    - name: String matching
+      href: articles/string-matching.md
+    - name: Find, Get and Edit
+      href: articles/lookup-semantics.md
+    - name: Searching members
+      href: articles/searching-members.md
     - name: Searching CIL instructions
       href: articles/cil-search.md
     - name: Editing assemblies
       href: articles/editing.md
+- name: Advanced
+  items:
+    - name: Cookbook
+      href: articles/cookbook.md
+    - name: Advanced topics
+      href: articles/advanced.md
+    - name: Troubleshooting
+      href: articles/troubleshooting.md
+- name: Reference
+  items:
+    - name: Specification reference
+      href: articles/reference-specs.md
+    - name: Locator reference
+      href: articles/reference-locator.md
+    - name: Glossary
+      href: articles/glossary.md
 - name: API Reference
   href: api/toc.yml
