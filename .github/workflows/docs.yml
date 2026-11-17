@@ -46,16 +46,23 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
       
+      - name: Restore project dependencies
+        run: dotnet restore src/AsmLocator.slnx
+        
+      # Build Core for the framework used by DocFX.
+      - name: Build Core
+        run: dotnet build src/AsmLocator/AsmLocator.csproj --configuration Release --framework net10.0
+
+      - name: Generate API Metadata
+        run: dotnet docfx metadata docs/docfx.json
+
+      - name: Build Documentation
+        run: dotnet docfx build docs/docfx.json
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
       
-      - name: Restore project dependencies
-        run: dotnet restore src/AsmLocator.slnx
-      
-      - name: Build DocFX site
-        run: dotnet docfx docs/docfx.json
-      
-      - name: Upload Pages artifact
+      - name: Upload Documentation
         uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_site
