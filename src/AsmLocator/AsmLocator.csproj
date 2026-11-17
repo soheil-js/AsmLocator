@@ -9,13 +9,19 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- NuGet Package -->
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>AsmLocator</PackageId>
-    <Version>1.0.0</Version>
+	<Authors>Soheil Jashnsaz</Authors>
     <Description>A specification-based API for locating and editing .NET assembly metadata and CIL instructions using AsmResolver.</Description>
+    <Copyright>Copyright (c) 2026 Soheil Jashnsaz.</Copyright>
+    <PackageProjectUrl>https://soheil-js.github.io/AsmLocator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/soheil-js/AsmLocator</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
     <PackageTags>dotnet;assembly;cil;il;metadata;asmresolver;reverse-engineering</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Version>1.0.0</Version>
 
     <!-- Symbols -->
     <IncludeSymbols>true</IncludeSymbols>
