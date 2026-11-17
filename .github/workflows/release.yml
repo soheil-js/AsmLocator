@@ -1,0 +1,195 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Default permissions for all jobs (least privilege).
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, Test and Pack
+    runs-on: windows-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # full history, needed to check that the tag is on main
+
+      # Only tags pointing to a commit that is reachable from main may be released.
+      - name: Verify tag is on main
+        shell: bash
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag '$GITHUB_REF_NAME' ($GITHUB_SHA) is not on the main branch."
+            echo "Merge the commit into main and push the tag again."
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      # The tag (e.g. v1.2.0) must match <Version> in AsmLocator.csproj,
+      # otherwise the published package would not match the release tag.
+      - name: Read package version
+        id: version
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(dotnet msbuild src/AsmLocator/AsmLocator.csproj -getProperty:Version | tr -d '\r')
+
+          if [ -z "$version" ]; then
+            echo "Version not found in src/AsmLocator/AsmLocator.csproj"
+            exit 1
+          fi
+
+          if [ "$TAG" != "v$version" ]; then
+            echo "Tag '$TAG' does not match project version 'v$version'."
+            echo "Update <Version> in AsmLocator.csproj or push a matching tag."
+            exit 1
+          fi
+
+          # A version containing '-' (e.g. 1.2.0-beta.1) is a pre-release.
+          if [[ "$version" == *-* ]]; then
+            prerelease=true
+          else
+            prerelease=false
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore src/AsmLocator.slnx
+
+      - name: Build
+        run: dotnet build src/AsmLocator.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test src/AsmLocator.slnx --no-build --configuration Release
+
+      # Only the library is packed (not the Example app or the test project).
+      # This produces AsmLocator.<version>.nupkg and AsmLocator.<version>.snupkg.
+      - name: Pack
+        run: >
+          dotnet pack src/AsmLocator/AsmLocator.csproj
+          --no-build
+          --configuration Release
+          --output dist
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Verify packages
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for file in "dist/AsmLocator.${VERSION}.nupkg" "dist/AsmLocator.${VERSION}.snupkg"; do
+            if [ ! -f "$file" ]; then
+              echo "Expected package not found: $file"
+              ls -la dist
+              exit 1
+            fi
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: asmlocator-packages
+          path: |
+            dist/*.nupkg
+            dist/*.snupkg
+          if-no-files-found: error
+
+  release:
+    name: Publish to NuGet and GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: release
+
+    permissions:
+      contents: write   # create the GitHub Release
+      id-token: write   # required for NuGet Trusted Publishing (OIDC)
+
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: asmlocator-packages
+          path: artifacts
+
+      # The temporary API key is valid for 1 hour, so log in right before pushing.
+      - name: NuGet login (OIDC -> temporary API key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}   # nuget.org profile name, NOT email
+
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          package="artifacts/AsmLocator.${VERSION}.nupkg"
+          symbols="artifacts/AsmLocator.${VERSION}.snupkg"
+
+          for file in "$package" "$symbols"; do
+            if [ ! -f "$file" ]; then
+              echo "Package not found: $file"
+              ls -la artifacts
+              exit 1
+            fi
+          done
+
+          # The main package must be pushed before its symbols package.
+          dotnet nuget push "$package" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+          dotnet nuget push "$symbols" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          # The tag already exists (it triggered this workflow).
+          tag_name: ${{ github.ref_name }}
+          name: AsmLocator v${{ needs.build.outputs.version }}
+          body: |
+            ## AsmLocator v${{ needs.build.outputs.version }}
+
+            Install from NuGet:
+
+            ```bash
+            dotnet add package AsmLocator --version ${{ needs.build.outputs.version }}
+            ```
+
+            https://www.nuget.org/packages/AsmLocator/${{ needs.build.outputs.version }}
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          draft: false
+          prerelease: ${{ needs.build.outputs.prerelease == 'true' }}
+          generate_release_notes: true
